@@ -1,0 +1,33 @@
+# Get session token
+curl -X POST "http://localhost:8000/session" \
+     -H "Content-Type: application/json" \
+     -d '{"host": "127.0.0.1", "port": 5432, "user": "admin", "password": "password", "database": "default"}'
+
+# Kill session
+curl -X POST "http://localhost:8000/session/close?session_id=YOUR_SESSION_ID"
+
+
+# create human record
+curl -X POST "http://localhost:8000/human/session?session_id=YOUR_SESSION_ID" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "name": "Alice",
+           "birthday": "1990-01-01",
+           "birthplace": "Wonderland",
+           "gender": "Female",
+           "culture": "Curious",
+           "status": "alive",
+           "biography": "Adventurous",
+           "comments": "Test entry"
+         }'
+
+# get human record 
+curl -X GET "http://localhost:8000/human/session/10?session_id=YOUR_SESSION_ID"
+
+# update human record
+curl -X PUT "http://localhost:8000/human/session/10?session_id=YOUR_SESSION_ID" \
+     -H "Content-Type: application/json" \
+     -d '{"comments": "Updated comment"}'
+
+# delete human record
+curl -X DELETE "http://localhost:8000/human/session/10?session_id=YOUR_SESSION_ID"

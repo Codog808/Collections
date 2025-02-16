@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres_collections-${VERSION}
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./docker_postgres_database/data:/var/lib/postgresql/data
+      - ./docker_postgres_database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - internal
+
+  postgres_interface:
+    image: python:3.9-slim
+    container_name: postgres_interface-${VERSION}
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./docker_database_interface:/app
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python main.py"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    networks:
+      - internal
+      - external
+
+networks:
+  internal:
+    internal: true # Create an internal-only network.
+  external:
+    driver: bridge
