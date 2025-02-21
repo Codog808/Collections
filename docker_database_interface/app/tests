@@ -1,0 +1,67 @@
+if __name__ == '__main__':
+    # Replace with your PostgreSQL Docker connection details.
+    HOST     = "127.0.0.1"    # or your Docker host IP
+    PORT     = 5432
+    USER     = "admin"
+    PASSWORD = "password"
+    DATABASE = "default"
+
+    with PostgresMaster(HOST, PORT, USER, PASSWORD, DATABASE) as master:
+        # You can execute any command via the master interface:
+        version_result = master.execute("SELECT version();")
+        print("PostgreSQL version:", version_result[0]['version'] if version_result else "N/A")
+        
+        user_interface = PostgresUser(master)
+
+        # --- CRUD for Humans ---
+        human_id = user_interface.create_human(
+            name="Alice",
+            birthday="1990-01-01",  # or date(1990, 1, 1)
+            birthplace="Wonderland",
+            gender="Female",
+            culture="Curious",
+            status="alive",  # must be valid per your schema
+            biography="Adventurous and kind.",
+            comments="Initial entry."
+        )
+        print("Created human with ID:", human_id)
+        human = user_interface.read_human(human_id)
+        print("Read human:", human)
+        user_interface.update_human(human_id, comments="Updated comment.")
+        human = user_interface.read_human(human_id)
+        print("Updated human:", human)
+
+        input()
+        # --- CRUD for Documents ---
+        # Note: For demonstration, use a valid human ID (e.g., 1) for related_human_id.
+        document_id = user_interface.create_document(
+            related_human_id=human_id,  # Replace with an existing human's ID
+            identifier_type="passport",
+            source="Scanned copy",
+            comments="Expires in 2030."
+        )
+        print("Created document with ID:", document_id)
+        document = user_interface.read_document(document_id)
+        print("Read document:", document)
+        user_interface.update_document(document_id, source="Updated scanned copy")
+        document = user_interface.read_document(document_id)
+        print("Updated document:", document)
+
+        input()
+        # --- CRUD for Families ---
+        family_id = user_interface.create_family(
+            related_human_id=human_id,  # Replace with an existing human's ID
+            relation_type="mother",
+            human_name="richard",
+            comments="Dumb as fuck"
+        )
+        print("Created family with ID:", family_id)
+        family = user_interface.read_family(family_id)
+        print("Read family:", family)
+        user_interface.update_family(family_id, comments="Updated description.")
+        family = user_interface.read_family(family_id)
+
+        user_interface.delete_human(human_id)
+        print("Deleted human with ID:", human_id)
+
+

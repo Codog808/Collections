@@ -1,8 +1,8 @@
 # main.py - Step 2: Import dependencies, define models, and create a session endpoint.
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 from session_manager import create_session, get_session, close_session
-from app import PostgresUser  # Import your PostgresUser class
+from app import PostgresUser, create_new_database, populate_database_with_schema
 
 # Database configuration model.
 class DBConfig(BaseModel):
@@ -270,8 +270,59 @@ def close_db_session(session_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# Bundle endpoint: Retrieve a paginated bundle of human records.
+@app.get("/session/bundle")
+def get_human_bundle(session_id: str, offset: int = Query(0, ge=0), limit: int = Query(10, gt=0)):
+    master = get_session(session_id)
+    if not master:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    try:
+        user_interface = PostgresUser(master)
+        bundle = user_interface.get_humans_bundle(offset=offset, limit=limit)
+        return {"bundle": bundle}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Database info endpoint: Return summary statistics for humans, documents, and families.
+@app.get("/database-info")
+def get_database_info(session_id: str):
+    master = get_session(session_id)
+    if not master:
+        raise HTTPException(status_code=404, detail="Session not found.")
+    try:
+        user_interface = PostgresUser(master)
+        info = user_interface.get_database_info()
+        return info
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+        # Endpoint to create a new database and populate it with the schema from init.sql.
+@app.post("/database/create")
+def create_and_populate_database(session_id: str, new_database: str):
+    master = get_session(session_id)
+    if not master:
+         raise HTTPException(status_code=404, detail="Session not found.")
+    try:
+         # Create the new database.
+         creation_message = create_new_database(master, new_database)
+         
+         # Build a configuration dict for the new database using the current connection's details.
+         new_db_config = {
+             'host': master.host,
+             'port': master.port,
+             'user': master.user,
+             'password': master.password,
+             'database': new_database
+         }
+         
+         # Populate the new database with the schema from init.sql.
+         schema_message = populate_database_with_schema(new_db_config)
+         
+         return {"message": f"{creation_message} {schema_message}"}
+    except Exception as e:
+         raise HTTPException(status_code=500, detail=str(e))
+
 # main.py - Step 5: Run the FastAPI app.
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-

@@ -1,7 +1,7 @@
 # Get session token
 curl -X POST "http://localhost:8000/session" \
      -H "Content-Type: application/json" \
-     -d '{"host": "127.0.0.1", "port": 5432, "user": "admin", "password": "password", "database": "default"}'
+     -d '{"host": "postgres", "port": 5432, "user": "admin", "password": "password", "database": "default"}'
 
 # Kill session
 curl -X POST "http://localhost:8000/session/close?session_id=YOUR_SESSION_ID"

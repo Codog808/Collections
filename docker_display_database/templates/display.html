@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Human Bundle Display</title>
+  </head>
+  <body>
+    <h1>Human Bundle Data</h1>
+    <p>Total Humans: {{ total_items }}</p>
+    <p>Page Size: {{ page_size }}</p>
+    <p>Number of Pages: {{ num_pages }}</p>
+    <h2>Bundle (Page 1)</h2>
+    <ul>
+      {% for human in bundle_data %}
+      <li>{{ human }}</li>
+      {% else %}
+      <li>No human records found.</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>

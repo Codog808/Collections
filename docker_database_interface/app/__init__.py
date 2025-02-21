@@ -1,4 +1,5 @@
 from .master import PostgresMaster
+import os
 from datetime import date
 
 # ---------------------------
@@ -117,72 +118,71 @@ class PostgresUser:
         params = (family_id,)
         self.master.execute(query, params)
 
+    # --- New Methods for Bundling and Database Info ---
+
+    def get_humans_bundle(self, offset=0, limit=10):
+        query = "SELECT * FROM humans ORDER BY id LIMIT %s OFFSET %s;"
+        params = (limit, offset)
+        result = self.master.execute(query, params)
+        return result
+
+    def get_database_info(self):
+        # Summary for humans
+        query_humans = "SELECT COUNT(*) AS total_items, MIN(id) AS min_id, MAX(id) AS max_id FROM humans;"
+        humans_stats = self.master.execute(query_humans)
+        # Summary for documents
+        query_documents = "SELECT COUNT(*) AS total_items, MIN(id) AS min_id, MAX(id) AS max_id FROM documents;"
+        documents_stats = self.master.execute(query_documents)
+        # Summary for families
+        query_families = "SELECT COUNT(*) AS total_items, MIN(id) AS min_id, MAX(id) AS max_id FROM families;"
+        families_stats = self.master.execute(query_families)
+
+        return {
+            "humans": humans_stats[0] if humans_stats else {},
+            "documents": documents_stats[0] if documents_stats else {},
+            "families": families_stats[0] if families_stats else {}
+        }
+
+def create_new_database(master, new_database: str):
+    """
+    Create a new database named new_database using the provided master connection.
+    The master connection should be connected to a maintenance database (e.g., "postgres")
+    that has permission to create new databases.
+    """
+    create_db_query = f"CREATE DATABASE {new_database};"
+    master.execute(create_db_query)
+    return f"Database '{new_database}' created successfully."
+
+
+def populate_database_with_schema(new_db_config: dict, init_sql_path: str = None):
+    """
+    Connect to the new database using new_db_config and run the SQL schema defined in init.sql.
+    new_db_config should be a dict containing keys: host, port, user, password, and database.
+    By default, init.sql is assumed to be in the same directory as this __init__.py file.
+    """
+    if init_sql_path is None:
+        init_sql_path = os.path.join(os.path.dirname(__file__), "init.sql")
+    
+    new_master = PostgresMaster(
+        new_db_config['host'],
+        new_db_config['port'],
+        new_db_config['user'],
+        new_db_config['password'],
+        new_db_config['database']
+    )
+    new_master.__enter__()
+    try:
+        with open(init_sql_path, 'r') as f:
+            init_sql = f.read()
+        # Split SQL statements on semicolon; adjust if your SQL is more complex.
+        statements = [stmt.strip() for stmt in init_sql.split(';') if stmt.strip()]
+        for statement in statements:
+            new_master.execute(statement + ';')
+    finally:
+        new_master.__exit__(None, None, None)
+    
+    return f"Database '{new_db_config['database']}' populated with schema from {init_sql_path}."
+
 # ---------------------------
 # Example Usage
 # ---------------------------
-if __name__ == '__main__':
-    # Replace with your PostgreSQL Docker connection details.
-    HOST     = "127.0.0.1"    # or your Docker host IP
-    PORT     = 5432
-    USER     = "admin"
-    PASSWORD = "password"
-    DATABASE = "default"
-
-    with PostgresMaster(HOST, PORT, USER, PASSWORD, DATABASE) as master:
-        # You can execute any command via the master interface:
-        version_result = master.execute("SELECT version();")
-        print("PostgreSQL version:", version_result[0]['version'] if version_result else "N/A")
-
-        user_interface = PostgresUser(master)
-
-        # --- CRUD for Humans ---
-        human_id = user_interface.create_human(
-            name="Alice",
-            birthday="1990-01-01",  # or date(1990, 1, 1)
-            birthplace="Wonderland",
-            gender="Female",
-            culture="Curious",
-            status="alive",  # must be valid per your schema
-            biography="Adventurous and kind.",
-            comments="Initial entry."
-        )
-        print("Created human with ID:", human_id)
-        human = user_interface.read_human(human_id)
-        print("Read human:", human)
-        user_interface.update_human(human_id, comments="Updated comment.")
-        human = user_interface.read_human(human_id)
-        print("Updated human:", human)
-
-        input()
-        # --- CRUD for Documents ---
-        # Note: For demonstration, use a valid human ID (e.g., 1) for related_human_id.
-        document_id = user_interface.create_document(
-            related_human_id=human_id,  # Replace with an existing human's ID
-            identifier_type="passport",
-            source="Scanned copy",
-            comments="Expires in 2030."
-        )
-        print("Created document with ID:", document_id)
-        document = user_interface.read_document(document_id)
-        print("Read document:", document)
-        user_interface.update_document(document_id, source="Updated scanned copy")
-        document = user_interface.read_document(document_id)
-        print("Updated document:", document)
-
-        input()
-        # --- CRUD for Families ---
-        family_id = user_interface.create_family(
-            related_human_id=human_id,  # Replace with an existing human's ID
-            relation_type="mother",
-            human_name="richard",
-            comments="Dumb as fuck"
-        )
-        print("Created family with ID:", family_id)
-        family = user_interface.read_family(family_id)
-        print("Read family:", family)
-        user_interface.update_family(family_id, comments="Updated description.")
-        family = user_interface.read_family(family_id)
-
-        user_interface.delete_human(human_id)
-        print("Deleted human with ID:", human_id)
-
