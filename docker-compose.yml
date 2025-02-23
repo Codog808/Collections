@@ -1,6 +1,8 @@
 services:
   postgres:
-    image: postgres:latest
+    build:
+      context: ./docker_postgres_database/
+      dockerfile: Dockerfile
     container_name: postgres_collections-${VERSION}
     restart: always
     environment:
@@ -9,22 +11,34 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./docker_postgres_database/data:/var/lib/postgresql/data
-      - ./docker_postgres_database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - internal
 
   postgres_interface:
-    image: python:3.9-slim
+    build:
+      context: ./docker_database_interface/
+      dockerfile: Dockerfile
     container_name: postgres_interface-${VERSION}
     restart: always
-    working_dir: /app
-    volumes:
-      - ./docker_database_interface:/app
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python main.py"
     ports:
       - "8000:8000"
     depends_on:
       - postgres
+    networks:
+      - internal
+      - external
+
+  postgres_display:
+    build:
+      context: ./docker_display_database/
+      dockerfile: Dockerfile
+    container_name: postgres_display-${VERSION}
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - postgres_interface
     networks:
       - internal
       - external

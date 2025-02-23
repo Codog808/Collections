@@ -1,0 +1,3 @@
+# FOR PERSISTANT DATA...
+
+- When customizing, make sure that the volume is defined. Left undefined as docker-compose.yml and debug_postgres.sh defines.

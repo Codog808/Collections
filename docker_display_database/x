@@ -1,0 +1,62 @@
+def view_table(table_name):
+    if "session_id" not in session:
+        flash("No active session. Please login.")
+        return redirect(url_for("index"))
+
+    base_url = session["base_url"]
+    sess_id = session["session_id"]
+
+    # Pagination setup
+    page = int(request.args.get("page", 0))
+    offset = page * 100
+
+    params = {
+        "session_id": sess_id,
+        "table_name": table_name,
+        "offset": offset,
+        "limit": 100
+    }
+
+    response = requests.get(f"{base_url}/session/bundle", params=params)
+
+    # Log for debugging
+    print(f"GET {response.url} → {response.status_code}")
+    print("Response:", response.text)
+
+    if response.status_code == 200:
+        table_data = response.json().get("bundle", [])
+        return table_data
+
+
+
+def view_table(table_name):
+    if "session_id" not in session:
+        flash("No active session. Please login.")
+        return redirect(url_for("index"))
+
+    base_url = session["base_url"]
+    sess_id = session["session_id"]
+
+    # Pagination setup
+    page = int(request.args.get("page", 0))
+    offset = page * 100
+
+    params = {
+        "session_id": sess_id,
+        "table_name": table_name,
+        "offset": offset,
+        "limit": 100
+    }
+
+    response = requests.get(f"{base_url}/session/bundle", params=params)
+
+    # Log for debugging
+    print(f"GET {response.url} → {response.status_code}")
+    print("Response:", response.text)
+
+    if response.status_code == 200:
+        table_data = response.json().get("bundle", [])
+        return render_template("table_view.html", table_name=table_name, table_data=table_data, page=page)
+    else:
+        flash(f"Error fetching data for table: {table_name} — {response.text}")
+        return redirect(url_for("list_tables"))

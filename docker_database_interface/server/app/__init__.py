@@ -118,13 +118,35 @@ class PostgresUser:
         params = (family_id,)
         self.master.execute(query, params)
 
-    # --- New Methods for Bundling and Database Info ---
+    def get_bundle(self, table_name: str, offset: int = 0, limit: int = 100):
+        """
+        Fetches a bundle of rows from the specified table with pagination.
+        Consistent with existing CRUD methods.
+        """
+        try:
+            # ✅ Validate the table exists
+            table_check_query = """
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.tables 
+                    WHERE table_schema = 'public' AND table_name = %s
+                );
+            """
+            result = self.master.execute(table_check_query, (table_name,))
+            if not result or not result[0]['exists']:
+                return {"error": f"Table '{table_name}' does not exist."}
 
-    def get_humans_bundle(self, offset=0, limit=10):
-        query = "SELECT * FROM humans ORDER BY id LIMIT %s OFFSET %s;"
-        params = (limit, offset)
-        result = self.master.execute(query, params)
-        return result
+            # ✅ Fetch paginated data
+            data_query = f"SELECT * FROM {table_name} OFFSET %s LIMIT %s;"
+            rows = self.master.execute(data_query, (offset, limit))
+
+            # ✅ Convert rows to list of dictionaries
+            bundle = [dict(row) for row in rows] if rows else []
+
+            return {"bundle": bundle}
+
+        except Exception as e:
+            return {"error": str(e)}
+
 
     def get_database_info(self):
         # Summary for humans

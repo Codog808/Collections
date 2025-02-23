@@ -46,7 +46,7 @@ class HumanUpdate(BaseModel):
     comments: str = None
 
 @app.post("/human/session", status_code=201)
-def create_human_session(session_id: str, human: HumanCreate):
+def create_human(session_id: str, human: HumanCreate):
     master = get_session(session_id)
     if not master:
         raise HTTPException(status_code=404, detail="Session not found.")
@@ -58,7 +58,7 @@ def create_human_session(session_id: str, human: HumanCreate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/human/session/{human_id}")
-def read_human_session(human_id: int, session_id: str): 
+def read_human(human_id: int, session_id: str): 
     master = get_session(session_id)
     if not master:
         raise HTTPException(status_code=404, detail="Session not found.")
@@ -72,7 +72,7 @@ def read_human_session(human_id: int, session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.put("/human/session/{human_id}")
-def update_human_session(human_id: int, session_id: str, human_update: HumanUpdate):
+def update_human(human_id: int, session_id: str, human_update: HumanUpdate):
     """
     Update an existing human record.
     Only non-null fields in the request will be updated.
@@ -92,7 +92,7 @@ def update_human_session(human_id: int, session_id: str, human_update: HumanUpda
          raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/human/session/{human_id}")
-def delete_human_session(human_id: int, session_id: str):
+def delete_human(human_id: int, session_id: str):
     """
     Delete a human record by its ID.
     """
@@ -121,7 +121,7 @@ class DocumentUpdate(BaseModel):
 
 # Create a Document record.
 @app.post("/document/session", status_code=201)
-def create_document_session(session_id: str, document: DocumentCreate):
+def create_document(session_id: str, document: DocumentCreate):
     master = get_session(session_id)
     if not master:
          raise HTTPException(status_code=404, detail="Session not found.")
@@ -139,7 +139,7 @@ def create_document_session(session_id: str, document: DocumentCreate):
 
 # Retrieve a Document record.
 @app.get("/document/session/{document_id}")
-def read_document_session(document_id: int, session_id: str):
+def read_document(document_id: int, session_id: str):
     master = get_session(session_id)
     if not master:
          raise HTTPException(status_code=404, detail="Session not found.")
@@ -154,7 +154,7 @@ def read_document_session(document_id: int, session_id: str):
 
 # Update a Document record.
 @app.put("/document/session/{document_id}")
-def update_document_session(document_id: int, session_id: str, document_update: DocumentUpdate):
+def update_document(document_id: int, session_id: str, document_update: DocumentUpdate):
     master = get_session(session_id)
     if not master:
          raise HTTPException(status_code=404, detail="Session not found.")
@@ -170,7 +170,7 @@ def update_document_session(document_id: int, session_id: str, document_update: 
 
 # Delete a Document record.
 @app.delete("/document/session/{document_id}")
-def delete_document_session(document_id: int, session_id: str):
+def delete_document(document_id: int, session_id: str):
     master = get_session(session_id)
     if not master:
          raise HTTPException(status_code=404, detail="Session not found.")

@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Database Tables</title>
+  </head>
+  <body>
+    <h1>Database Tables</h1>
+
+    {% for table, info in db_info.items() %}
+    <h2>
+      <a href="{{ url_for('view_table', table_name=table) }}">{{ table }}</a>
+    </h2>
+    <p>Total Records: {{ info.get('total_items', 0) }}</p>
+    <p>
+      Description: {{ info.get('description', 'No description available.') }}
+    </p>
+    <hr />
+    {% endfor %}
+
+    <a href="{{ url_for('index') }}">Logout</a>
+  </body>
+</html>
